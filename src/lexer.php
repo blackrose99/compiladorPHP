@@ -5,7 +5,7 @@ class Lexico
     private $tokens = [];
     private $pos = 0;
     private $linea = 1;
-    private const PALABRAS_CLAVE = ['si', 'sino', 'variable', 'mientras', 'para', 'retornar', 'entero'];
+    private const PALABRAS_CLAVE = ['si', 'sino', 'variable', 'mientras', 'para', 'retornar', 'entero', 'cadena'];
     private const OPERADORES = ['+', '-', '*', '/', '=', '==', '!=', '<', '>', '<=', '>=', '&&', '||'];
     private const SIMBOLOS = [';', '(', ')', '{', '}', '[', ']', ',', '.', ':', '?', '@'];
 
