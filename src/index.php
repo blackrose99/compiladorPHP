@@ -94,7 +94,8 @@ si (bandera == 1) {
                 <textarea class="form-control" id="codigo" name="codigo" rows="10" style="resize: vertical; font-family: monospace;" placeholder="Pegue su código aquí..."><?php echo isset($_POST['codigo']) ? htmlspecialchars($_POST['codigo']) : ''; ?></textarea>
             </div>
             <button type="submit" class="btn btn-primary" style="margin-right: 10px;">Compilar</button>
-            <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#ayudaModal">Ayuda</button>
+            <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#ayudaModal" style="margin-right: 10px;">Ayuda</button>
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('codigo').value = '';">Limpiar</button>
         </form>
 
         <!-- Resultados -->
@@ -131,22 +132,42 @@ si (bandera == 1) {
 
     <!-- Modal de Ayuda -->
     <div class="modal fade" id="ayudaModal" tabindex="-1" aria-labelledby="ayudaModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="ayudaModalLabel">Sintaxis Válida</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p>El compilador soporta las siguientes construcciones:</p>
+                    <p>El compilador reconoce las siguientes construcciones y tokens:</p>
+                    <h6>Palabras Clave:</h6>
+                    <p><code>si</code>, <code>sino</code>, <code>variable</code>, <code>mientras</code>, <code>para</code>, <code>retornar</code>, <code>entero</code></p>
+                    <h6>Operadores:</h6>
+                    <p><code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>=</code>, <code>==</code>, <code>!=</code>, <code>
+                            << /code>, <code>></code>, <code>
+                                    <=< /code>, <code>>=</code>, <code>&&</code>, <code>||</code></p>
+                    <h6>Símbolos:</h6>
+                    <p><code>;</code>, <code>(</code>, <code>)</code>, <code>{</code>, <code>}</code>, <code>[</code>, <code>]</code>, <code>,</code>, <code>.</code>, <code>:</code>, <code>?</code>, <code>@</code></p>
+                    <h6>Construcciones Soportadas:</h6>
                     <ul>
                         <li><strong>Declaración de variables:</strong> <code>entero nombre = valor;</code> (solo valores numéricos).</li>
                         <li><strong>Asignación:</strong> <code>nombre = valor;</code> (variable debe estar declarada).</li>
-                        <li><strong>Condicional:</strong> <code>si (condicion) { sentencias }</code> (condición con operadores <code>==</code>, <code>!=</code>, <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code>).</li>
+                        <li><strong>Condicional:</strong> <code>si (condicion) { sentencias }</code> (condición con operadores <code>==</code>, <code>!=</code>, <code>
+                                << /code>, <code>></code>, <code>
+                                        <=< /code>, <code>>=</code>).</li>
                         <li><strong>Bucle:</strong> <code>mientras (condicion) { sentencias }</code>.</li>
                         <li><strong>Expresiones:</strong> Operaciones con <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code> (ejemplo: <code>contador = contador + 1;</code>).</li>
+                        <li><strong>Cadenas:</strong> Cadenas entre comillas (<code>"texto"</code> o <code>'texto'</code>) son reconocidas pero no soportadas en asignaciones o condiciones.</li>
+                        <li><strong>Notas:</strong> Palabras clave como <code>sino</code>, <code>variable</code>, <code>para</code>, <code>retornar</code> y símbolos como <code>:</code>, <code>?</code>, <code>@</code> son reconocidos léxicamente pero no implementados en el parser o intérprete.</li>
                     </ul>
-                    <p><strong>Ejemplo válido:</strong></p>
+                    <h6>Ejemplos:</h6>
+                    <p><strong>Declaración y Asignación:</strong></p>
+                    <pre>entero x = 5; x = x + 2;</pre>
+                    <p><strong>Condicional:</strong></p>
+                    <pre>si (x == 7) { x = 0; }</pre>
+                    <p><strong>Bucle:</strong></p>
+                    <pre>mientras (x < 5) { x = x + 1; }</pre>
+                    <p><strong>Ejemplo Completo:</strong></p>
                     <pre>
 entero bandera = 1;
 si (bandera == 1) {
