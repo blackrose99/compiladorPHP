@@ -1,35 +1,80 @@
 <?php
-
 require_once 'lexer.php';
 require_once 'parser.php';
 require_once 'interpreter.php';
 
-// Código de prueba (puede venir de un archivo o entrada de usuario)
-$code = <<<CODE
-int x = 5;
-int y = 7;
-in/t menu = 1;
-int z = x + y;
+class Compilador
+{
+    private $lexico;
+    private $sintactico;
+    private $interprete;
 
-CODE;
-/*while(menu != 0){
-    int z = x + y;
-    menu = 0;
-}*/
+    public function __construct()
+    {
+        $this->interprete = new Interprete();
+    }
 
+    public function compilar($codigo)
+    {
+        try {
+            // Paso 1: Análisis Léxico
+            $this->lexico = new Lexico($codigo);
+            $tokens = $this->lexico->tokenizar();
 
-$lexer = new Lexer($code);
-$tokens = $lexer->tokenize();
+            // Verificar errores léxicos
+            foreach ($tokens as $token) {
+                if ($token['tipo'] === 'ERROR') {
+                    throw new Exception("Error Léxico en la línea {$token['linea']}: {$token['valor']}");
+                }
+            }
 
-print_r($tokens);
+            // Paso 2: Análisis Sintáctico
+            $this->sintactico = new Sintactico($tokens);
+            $sentencias = $this->sintactico->analizar();
 
+            // Paso 3: Análisis Semántico
+            $this->interprete->analizarSemantica($sentencias);
 
-// Pasar tokens al parser
-$parser = new Parser($tokens);
-$statements = $parser->parse();
+            // Paso 4: Ejecución
+            $resultado = $this->interprete->ejecutar($sentencias);
 
-/*// Ejecutar en el intérprete
-$interpreter = new Interpreter();
-$interpreter->execute($statements);*/
+            return [
+                'tokens' => $tokens,
+                'ast' => $sentencias,
+                'resultado' => $resultado,
+                'estado' => 'exito'
+            ];
+        } catch (Exception $e) {
+            return [
+                'error' => $e->getMessage(),
+                'estado' => 'error'
+            ];
+        }
+    }
+}
 
-?>
+// Uso
+$codigo = <<<CODIGO
+entero bandera = 1;
+si (noDeclarada == 1) {
+    entero contador = 0;
+    mientras (contador < 3) {
+        contador = contador + 1;
+    }
+    bandera = 0;
+}
+CODIGO;
+
+$compilador = new Compilador();
+$resultado = $compilador->compilar($codigo);
+
+if ($resultado['estado'] === 'exito') {
+    echo "Tokens:\n";
+    print_r($resultado['tokens']);
+    echo "\nÁrbol Sintáctico (AST):\n";
+    print_r($resultado['ast']);
+    echo "\nResultado:\n";
+    print_r($resultado['resultado']);
+} else {
+    echo "Error: " . $resultado['error'] . "\n";
+}

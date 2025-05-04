@@ -1,115 +1,152 @@
 <?php
-
-class Lexer {
-    private $code;
+class Lexico
+{
+    private $codigo;
     private $tokens = [];
     private $pos = 0;
-    private $line = 1; // Para mostrar la línea del error
+    private $linea = 1;
+    private const PALABRAS_CLAVE = ['si', 'sino', 'variable', 'mientras', 'para', 'retornar', 'entero'];
+    private const OPERADORES = ['+', '-', '*', '/', '=', '==', '!=', '<', '>', '<=', '>=', '&&', '||'];
+    private const SIMBOLOS = [';', '(', ')', '{', '}', '[', ']', ',', '.', ':', '?', '@'];
 
-    private const KEYWORDS = ['if', 'else', 'var', 'while', 'for', 'return', 'int'];
-    private const OPERATORS = ['+', '-', '*', '/', '=', '==', '!=', '<', '>', '<=', '>=', '&&', '||'];
-    private const SYMBOLS = [';', '(', ')', '{', '}', '[', ']', ',', '.'];
-
-    public function __construct($code) {
-        $this->code = $code;
+    public function __construct($codigo)
+    {
+        $this->codigo = $codigo;
     }
 
-    public function tokenize() {
-        while ($this->pos < strlen($this->code)) {
-            $char = $this->code[$this->pos];
+    public function tokenizar()
+    {
+        while ($this->pos < strlen($this->codigo)) {
+            $char = $this->codigo[$this->pos];
 
             // Ignorar espacios en blanco
             if (ctype_space($char)) {
                 if ($char === "\n") {
-                    $this->line++; // Contar líneas
+                    $this->linea++;
                 }
                 $this->pos++;
                 continue;
             }
 
-            // Identificar palabras clave o variables
+            // Manejar comentarios (// de una línea)
+            if ($char === '/' && $this->siguienteCaracter() === '/') {
+                while ($this->pos < strlen($this->codigo) && $this->codigo[$this->pos] !== "\n") {
+                    $this->pos++;
+                }
+                continue;
+            }
+
+            // Identificar palabras clave o identificadores
             if (ctype_alpha($char) || $char === '_') {
-                $word = $this->readWord();
-                $this->tokens[] = ['type' => in_array($word, self::KEYWORDS) ? 'KEYWORD' : 'IDENTIFIER', 'value' => $word, 'line' => $this->line];
+                $palabra = $this->leerPalabra();
+                $this->tokens[] = [
+                    'tipo' => in_array($palabra, self::PALABRAS_CLAVE) ? 'PALABRA_CLAVE' : 'IDENTIFICADOR',
+                    'valor' => $palabra,
+                    'linea' => $this->linea
+                ];
                 continue;
             }
 
             // Identificar números
             if (ctype_digit($char)) {
-                $this->tokens[] = ['type' => 'NUMBER', 'value' => $this->readNumber(), 'line' => $this->line];
+                $this->tokens[] = [
+                    'tipo' => 'NUMERO',
+                    'valor' => $this->leerNumero(),
+                    'linea' => $this->linea
+                ];
                 continue;
             }
 
             // Identificar cadenas de texto
             if ($char === '"' || $char === "'") {
-                $this->tokens[] = ['type' => 'STRING', 'value' => $this->readString($char), 'line' => $this->line];
+                $this->tokens[] = [
+                    'tipo' => 'CADENA',
+                    'valor' => $this->leerCadena($char),
+                    'linea' => $this->linea
+                ];
                 continue;
             }
 
-            // Identificar operadores dobles
-            $nextChar = $this->peekNext();
-            if (in_array($char . $nextChar, self::OPERATORS)) {
-                $this->tokens[] = ['type' => 'OPERATOR', 'value' => $char . $nextChar, 'line' => $this->line];
+            // Identificar operadores de dos caracteres
+            $siguienteChar = $this->siguienteCaracter();
+            if (in_array($char . $siguienteChar, self::OPERADORES)) {
+                $this->tokens[] = [
+                    'tipo' => 'OPERADOR',
+                    'valor' => $char . $siguienteChar,
+                    'linea' => $this->linea
+                ];
                 $this->pos += 2;
                 continue;
             }
 
-            // Identificar operadores simples
-            if (in_array($char, self::OPERATORS)) {
-                $this->tokens[] = ['type' => 'OPERATOR', 'value' => $char, 'line' => $this->line];
+            // Identificar operadores de un carácter
+            if (in_array($char, self::OPERADORES)) {
+                $this->tokens[] = [
+                    'tipo' => 'OPERADOR',
+                    'valor' => $char,
+                    'linea' => $this->linea
+                ];
                 $this->pos++;
                 continue;
             }
 
             // Identificar símbolos
-            if (in_array($char, self::SYMBOLS)) {
-                $this->tokens[] = ['type' => 'SYMBOL', 'value' => $char, 'line' => $this->line];
+            if (in_array($char, self::SIMBOLOS)) {
+                $this->tokens[] = [
+                    'tipo' => 'SIMBOLO',
+                    'valor' => $char,
+                    'linea' => $this->linea
+                ];
                 $this->pos++;
                 continue;
             }
 
-            // ⚠️ Error de caracter no reconocido
-            $this->tokens[] = ['type' => 'ERROR', 'value' => "Carácter no reconocido: '$char'", 'line' => $this->line];
+            // Error por carácter no reconocido
+            $this->tokens[] = [
+                'tipo' => 'ERROR',
+                'valor' => "Carácter no reconocido: '$char'",
+                'linea' => $this->linea
+            ];
             $this->pos++;
         }
 
         return $this->tokens;
     }
 
-    private function readWord() {
-        $word = '';
-        while ($this->pos < strlen($this->code) && (ctype_alnum($this->code[$this->pos]) || $this->code[$this->pos] === '_')) {
-            $word .= $this->code[$this->pos++];
+    private function leerPalabra()
+    {
+        $palabra = '';
+        while ($this->pos < strlen($this->codigo) && (ctype_alnum($this->codigo[$this->pos]) || $this->codigo[$this->pos] === '_')) {
+            $palabra .= $this->codigo[$this->pos++];
         }
-        return $word;
+        return $palabra;
     }
 
-    private function readNumber() {
-        $number = '';
-        while ($this->pos < strlen($this->code) && ctype_digit($this->code[$this->pos])) {
-            $number .= $this->code[$this->pos++];
+    private function leerNumero()
+    {
+        $numero = '';
+        while ($this->pos < strlen($this->codigo) && ctype_digit($this->codigo[$this->pos])) {
+            $numero .= $this->codigo[$this->pos++];
         }
-        return intval($number);
+        return intval($numero);
     }
 
-    private function readString($quoteType) {
-        $this->pos++; // Saltar la comilla inicial
-        $string = '';
-
-        while ($this->pos < strlen($this->code) && $this->code[$this->pos] !== $quoteType) {
-            if ($this->code[$this->pos] === "\n") {
-                $this->line++; // Contar línea si hay salto de línea
+    private function leerCadena($tipoComilla)
+    {
+        $this->pos++; // Saltar comilla inicial
+        $cadena = '';
+        while ($this->pos < strlen($this->codigo) && $this->codigo[$this->pos] !== $tipoComilla) {
+            if ($this->codigo[$this->pos] === "\n") {
+                $this->linea++;
             }
-            $string .= $this->code[$this->pos++];
+            $cadena .= $this->codigo[$this->pos++];
         }
-
-        $this->pos++; // Saltar la comilla final
-        return $string;
+        $this->pos++; // Saltar comilla final
+        return $cadena;
     }
 
-    private function peekNext() {
-        return $this->pos + 1 < strlen($this->code) ? $this->code[$this->pos + 1] : '';
+    private function siguienteCaracter()
+    {
+        return $this->pos + 1 < strlen($this->codigo) ? $this->codigo[$this->pos + 1] : '';
     }
 }
-
-?>
